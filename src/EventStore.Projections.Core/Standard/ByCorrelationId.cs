@@ -69,13 +69,20 @@ namespace EventStore.Projections.Core.Standard
             newState = null;
             if (data.EventStreamId != data.PositionStreamId)
                 return false;
-            if (!data.IsJson) 
+            
+            JObject metadata = null;
+
+            try{
+                metadata = JObject.Parse(data.Metadata);
+            }
+            catch(JsonReaderException){
                 return false;
-            var metadata = JObject.Parse(data.Metadata);
-            var indexedEventType = data.EventType;
-            
+            }
+
+            if(metadata["$correlationId"] == null)
+                return false;
+
             string correlationId = metadata["$correlationId"].Value<string>();
-            
             if (correlationId == null) 
                 return false;
             string positionStreamId = data.PositionStreamId;
